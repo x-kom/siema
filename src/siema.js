@@ -47,6 +47,7 @@ export default class Siema {
       perPage: 1,
       startIndex: 0,
       draggable: true,
+      preventClickOnDrag: false,
       multipleDrag: true,
       threshold: 20,
       loop: false,
@@ -106,7 +107,7 @@ export default class Siema {
       this.selector.addEventListener('mousemove', this.mousemoveHandler);
 
       // Click
-      this.selector.addEventListener('click', this.clickHandler);
+      this.selector.addEventListener('click', this.clickHandler, this.config.preventClickOnDrag);
     }
   }
 
@@ -419,14 +420,13 @@ export default class Siema {
   mousemoveHandler(e) {
     e.preventDefault();
     if (this.pointerDown) {
-      // if dragged element is a link
-      // mark preventClick prop as a true
-      // to detemine about browser redirection later on
-      if (e.target.nodeName === 'A') {
+      this.drag.endX = e.pageX;
+
+      const dragDistance = Math.abs(this.drag.startX - this.drag.endX);
+      if (dragDistance > 2 && this.config.preventClickOnDrag) {
         this.drag.preventClick = true;
       }
 
-      this.drag.endX = e.pageX;
       this.selector.style.cursor = '-webkit-grabbing';
       this.sliderFrame.style.webkitTransition = `all 0ms ${this.config.easing}`;
       this.sliderFrame.style.transition = `all 0ms ${this.config.easing}`;
@@ -443,6 +443,7 @@ export default class Siema {
       this.pointerDown = false;
       this.selector.style.cursor = '-webkit-grab';
       this.drag.endX = e.pageX;
+      this.drag.preventClick = false;
       this.sliderFrame.style.webkitTransition = `all ${this.config.duration}ms ${this.config.easing}`;
       this.sliderFrame.style.transition = `all ${this.config.duration}ms ${this.config.easing}`;
       this.updateAfterDrag();
@@ -458,6 +459,7 @@ export default class Siema {
     // if the dragged element is a link
     // prevent browsers from folowing the link
     if (this.drag.preventClick) {
+      e.stopPropagation();
       e.preventDefault();
     }
     this.drag.preventClick = false;
