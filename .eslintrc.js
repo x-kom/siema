@@ -151,10 +151,10 @@ module.exports = {
         'position': 'above'
       }
     ],
-    'linebreak-style': [
-      2,
-      'unix'
-    ],
+    // 'linebreak-style': [
+    //   2,
+    //   'unix'
+    // ],
     'lines-around-directive': [
       2,
       'always'
