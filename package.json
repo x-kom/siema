@@ -31,6 +31,5 @@
     "slider",
     "carousel",
     "lightweight"
-  ],
-  "types": "./src/siema.d.ts"
+  ]
 }
