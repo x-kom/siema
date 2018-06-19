@@ -125,6 +125,9 @@ Remove item at particular `index` (number) [(example)](http://codepen.io/pawelgr
 **`insert(item, index, callback)`**  
 Insert new `item` (DOM element) at specific `index` (number) [(example)](http://codepen.io/pawelgrzybek/pen/QvLdaJ). Optional `callback` (function) available as a third argument [(example)](http://codepen.io/pawelgrzybek/pen/vmBgdZ).
 
+**`insert(item, index, callback)`**  
+Replace old slide at specific `index` (number) with a new `item` (DOM element). Optional `callback` (function) available as a third argument.
+
 **`prepend(item, callback)`**  
 Prepend new `item` (DOM element) [(example)](http://codepen.io/pawelgrzybek/pen/rmBymW). Optional `callback` (function) available as a second argument [(example)](http://codepen.io/pawelgrzybek/pen/LyPWLe).
 
