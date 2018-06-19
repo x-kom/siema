@@ -13,9 +13,10 @@ export default class Siema {
   prev(howManySlides?: number, callback?: () => void): void;
   goTo(index: number, callback?: () => void): void;
   remove(index: number, callback?: () => void): void;
-  insert(item: HTMLElement, index: number, callback?: () => void): void;
-  prepend(item: HTMLElement, callback?: () => void): void;
-  append(item: HTMLElement, callback?: () => void): void;
+  insert(item: Node, index: number, callback?: () => void): void;
+  replace(item: Node, index: number, callback?: () => void): void;
+  prepend(item: Node, callback?: () => void): void;
+  append(item: Node, callback?: () => void): void;
   destroy(restoreMarkup?: boolean, callback?: () => void): void;
 }
 
@@ -24,7 +25,7 @@ export interface PageInterface {
 }
 
 export interface SiemaOptions {
-  selector?: string | HTMLElement;
+  selector?: string | Node;
   duration?: number;
   easing?: string;
   perPage?: number | PageInterface;
