@@ -18,10 +18,13 @@ export default class Siema {
       throw new Error('Something wrong with your selector 😭');
     }
 
+    // update perPage number dependable of user value
+    this.resolveSlidesNumber();
+
     // Create global references
     this.selectorWidth = this.selector.offsetWidth;
     this.innerElements = [].slice.call(this.selector.children);
-    this.currentSlide = this.config.startIndex;
+    this.currentSlide = Math.max(0, Math.min(this.config.startIndex, this.innerElements.length - this.perPage));
     this.transformProperty = Siema.webkitOrNot();
 
     // Bind all event handlers for referencability
@@ -69,6 +72,7 @@ export default class Siema {
 
   /**
    * Determine if browser supports unprefixed transform property.
+   * Google Chrome since version 26 supports prefix-less transform
    * @returns {string} - Transform property supported by client.
    */
   static webkitOrNot() {
@@ -137,9 +141,6 @@ export default class Siema {
    */
   init() {
     this.attachEvents();
-
-    // update perPage number dependable of user value
-    this.resolveSlidesNumber();
 
     // hide everything out of selector's boundaries
     if (this.config.overflowHidden) {
@@ -313,7 +314,7 @@ export default class Siema {
     // relcalculate currentSlide
     // prevent hiding items when browser width increases
     if (this.currentSlide + this.perPage > this.innerElements.length) {
-      this.currentSlide = this.innerElements.length - this.perPage;
+      this.currentSlide = this.innerElements.length <= this.perPage ? 0 : this.innerElements.length - this.perPage;
     }
 
     this.slideToCurrent();
@@ -425,6 +426,13 @@ export default class Siema {
   mousemoveHandler(e) {
     e.preventDefault();
     if (this.pointerDown) {
+      // if dragged element is a link
+      // mark preventClick prop as a true
+      // to detemine about browser redirection later on
+      if (e.target.nodeName === 'A') {
+        this.drag.preventClick = true;
+      }
+
       this.drag.endX = e.pageX;
 
       const dragDistance = Math.abs(this.drag.startX - this.drag.endX);
@@ -520,10 +528,13 @@ export default class Siema {
       throw new Error('Item to remove doesn\'t exist 😭');
     }
 
-    // when iteam wit lower index than current is removed
-    // shift slider back one position
-    // better UX and avoids situation with slider with no visible items
-    if (index < this.currentSlide) {
+    // Shift sliderFrame back by one item when:
+    // 1. Item with lower index than currenSlide is removed.
+    // 2. Last item is removed.
+    const lowerIndex = index < this.currentSlide;
+    const lastItem = this.currentSlide + this.perPage - 1 === index;
+
+    if (lowerIndex || lastItem) {
       this.currentSlide--;
     }
 
