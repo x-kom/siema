@@ -18,10 +18,15 @@ export default class Siema {
       throw new Error('Something wrong with your selector 😭');
     }
 
+    // update perPage number dependable of user value
+    this.resolveSlidesNumber();
+
     // Create global references
     this.selectorWidth = this.selector.offsetWidth;
     this.innerElements = [].slice.call(this.selector.children);
-    this.currentSlide = this.config.startIndex;
+    this.currentSlide = this.config.loop ?
+      this.config.startIndex % this.innerElements.length :
+      Math.max(0, Math.min(this.config.startIndex, this.innerElements.length - this.perPage));
     this.transformProperty = Siema.webkitOrNot();
 
     // Bind all event handlers for referencability
@@ -50,6 +55,7 @@ export default class Siema {
       multipleDrag: true,
       threshold: 20,
       loop: false,
+      rtl: false,
       onInit: () => {},
       onChange: () => {},
     };
@@ -65,6 +71,7 @@ export default class Siema {
 
   /**
    * Determine if browser supports unprefixed transform property.
+   * Google Chrome since version 26 supports prefix-less transform
    * @returns {string} - Transform property supported by client.
    */
   static webkitOrNot() {
@@ -116,7 +123,6 @@ export default class Siema {
    */
   detachEvents() {
     window.removeEventListener('resize', this.resizeHandler);
-    this.selector.style.cursor = 'auto';
     this.selector.removeEventListener('touchstart', this.touchstartHandler);
     this.selector.removeEventListener('touchend', this.touchendHandler);
     this.selector.removeEventListener('touchmove', this.touchmoveHandler);
@@ -134,17 +140,30 @@ export default class Siema {
   init() {
     this.attachEvents();
 
-    // update perPage number dependable of user value
-    this.resolveSlidesNumber();
-
     // hide everything out of selector's boundaries
     this.selector.style.overflow = 'hidden';
 
+    // rtl or ltr
+    this.selector.style.direction = this.config.rtl ? 'rtl' : 'ltr';
+
+    // build a frame and slide to a currentSlide
+    this.buildSliderFrame();
+
+    this.config.onInit.call(this);
+  }
+
+
+  /**
+   * Build a sliderFrame and slide to a current item.
+   */
+  buildSliderFrame() {
+    const widthItem = this.selectorWidth / this.perPage;
+    const itemsToBuild = this.config.loop ? this.innerElements.length + (2 * this.perPage) : this.innerElements.length;
+
     // Create frame and apply styling
     this.sliderFrame = document.createElement('div');
-    this.sliderFrame.style.width = `${(this.selectorWidth / this.perPage) * this.innerElements.length}px`;
-    this.sliderFrame.style.webkitTransition = `all ${this.config.duration}ms ${this.config.easing}`;
-    this.sliderFrame.style.transition = `all ${this.config.duration}ms ${this.config.easing}`;
+    this.sliderFrame.style.width = `${widthItem * itemsToBuild}px`;
+    this.enableTransition();
 
     if (this.config.draggable) {
       this.selector.style.cursor = '-webkit-grab';
@@ -154,13 +173,21 @@ export default class Siema {
     const docFragment = document.createDocumentFragment();
 
     // Loop through the slides, add styling and add them to document fragment
+    if (this.config.loop) {
+      for (let i = this.innerElements.length - this.perPage; i < this.innerElements.length; i++) {
+        const element = this.buildSliderFrameItem(this.innerElements[i].cloneNode(true));
+        docFragment.appendChild(element);
+      }
+    }
     for (let i = 0; i < this.innerElements.length; i++) {
-      const elementContainer = document.createElement('div');
-      elementContainer.style.cssFloat = 'left';
-      elementContainer.style.float = 'left';
-      elementContainer.style.width = `${100 / this.innerElements.length}%`;
-      elementContainer.appendChild(this.innerElements[i]);
-      docFragment.appendChild(elementContainer);
+      const element = this.buildSliderFrameItem(this.innerElements[i]);
+      docFragment.appendChild(element);
+    }
+    if (this.config.loop) {
+      for (let i = 0; i < this.perPage; i++) {
+        const element = this.buildSliderFrameItem(this.innerElements[i].cloneNode(true));
+        docFragment.appendChild(element);
+      }
     }
 
     // Add fragment to the frame
@@ -172,7 +199,15 @@ export default class Siema {
 
     // Go to currently active slide after initial build
     this.slideToCurrent();
-    this.config.onInit.call(this);
+  }
+
+  buildSliderFrameItem(elm) {
+    const elementContainer = document.createElement('div');
+    elementContainer.style.cssFloat = this.config.rtl ? 'right' : 'left';
+    elementContainer.style.float = this.config.rtl ? 'right' : 'left';
+    elementContainer.style.width = `${this.config.loop ? 100 / (this.innerElements.length + (this.perPage * 2)) : 100 / (this.innerElements.length)}%`;
+    elementContainer.appendChild(elm);
+    return elementContainer;
   }
 
 
@@ -200,18 +235,37 @@ export default class Siema {
    * @param {function} callback - Optional callback function.
    */
   prev(howManySlides = 1, callback) {
+    // early return when there is nothing to slide
     if (this.innerElements.length <= this.perPage) {
       return;
     }
+
     const beforeChange = this.currentSlide;
-    if (this.currentSlide === 0 && this.config.loop) {
-      this.currentSlide = this.innerElements.length - this.perPage;
+
+    if (this.config.loop) {
+      const isNewIndexClone = this.currentSlide - howManySlides < 0;
+      if (isNewIndexClone) {
+        this.disableTransition();
+
+        const mirrorSlideIndex = this.currentSlide + this.innerElements.length;
+        const mirrorSlideIndexOffset = this.perPage;
+        const moveTo = mirrorSlideIndex + mirrorSlideIndexOffset;
+        const offset = (this.config.rtl ? 1 : -1) * moveTo * (this.selectorWidth / this.perPage);
+        const dragDistance = this.config.draggable ? this.drag.endX - this.drag.startX : 0;
+
+        this.sliderFrame.style[this.transformProperty] = `translate3d(${offset + dragDistance}px, 0, 0)`;
+        this.currentSlide = mirrorSlideIndex - howManySlides;
+      }
+      else {
+        this.currentSlide = this.currentSlide - howManySlides;
+      }
     }
     else {
       this.currentSlide = Math.max(this.currentSlide - howManySlides, 0);
     }
+
     if (beforeChange !== this.currentSlide) {
-      this.slideToCurrent();
+      this.slideToCurrent(this.config.loop);
       this.config.onChange.call(this);
       if (callback) {
         callback.call(this);
@@ -226,23 +280,59 @@ export default class Siema {
    * @param {function} callback - Optional callback function.
    */
   next(howManySlides = 1, callback) {
+    // early return when there is nothing to slide
     if (this.innerElements.length <= this.perPage) {
       return;
     }
+
     const beforeChange = this.currentSlide;
-    if (this.currentSlide === this.innerElements.length - this.perPage && this.config.loop) {
-      this.currentSlide = 0;
+
+    if (this.config.loop) {
+      const isNewIndexClone = this.currentSlide + howManySlides > this.innerElements.length - this.perPage;
+      if (isNewIndexClone) {
+        this.disableTransition();
+
+        const mirrorSlideIndex = this.currentSlide - this.innerElements.length;
+        const mirrorSlideIndexOffset = this.perPage;
+        const moveTo = mirrorSlideIndex + mirrorSlideIndexOffset;
+        const offset = (this.config.rtl ? 1 : -1) * moveTo * (this.selectorWidth / this.perPage);
+        const dragDistance = this.config.draggable ? this.drag.endX - this.drag.startX : 0;
+
+        this.sliderFrame.style[this.transformProperty] = `translate3d(${offset + dragDistance}px, 0, 0)`;
+        this.currentSlide = mirrorSlideIndex + howManySlides;
+      }
+      else {
+        this.currentSlide = this.currentSlide + howManySlides;
+      }
     }
     else {
       this.currentSlide = Math.min(this.currentSlide + howManySlides, this.innerElements.length - this.perPage);
     }
     if (beforeChange !== this.currentSlide) {
-      this.slideToCurrent();
+      this.slideToCurrent(this.config.loop);
       this.config.onChange.call(this);
       if (callback) {
         callback.call(this);
       }
     }
+  }
+
+
+  /**
+   * Disable transition on sliderFrame.
+   */
+  disableTransition() {
+    this.sliderFrame.style.webkitTransition = `all 0ms ${this.config.easing}`;
+    this.sliderFrame.style.transition = `all 0ms ${this.config.easing}`;
+  }
+
+
+  /**
+   * Enable transition on sliderFrame.
+   */
+  enableTransition() {
+    this.sliderFrame.style.webkitTransition = `all ${this.config.duration}ms ${this.config.easing}`;
+    this.sliderFrame.style.transition = `all ${this.config.duration}ms ${this.config.easing}`;
   }
 
 
@@ -256,7 +346,9 @@ export default class Siema {
       return;
     }
     const beforeChange = this.currentSlide;
-    this.currentSlide = Math.min(Math.max(index, 0), this.innerElements.length - this.perPage);
+    this.currentSlide = this.config.loop ?
+      index % this.innerElements.length :
+      Math.min(Math.max(index, 0), this.innerElements.length - this.perPage);
     if (beforeChange !== this.currentSlide) {
       this.slideToCurrent();
       this.config.onChange.call(this);
@@ -270,8 +362,23 @@ export default class Siema {
   /**
    * Moves sliders frame to position of currently active slide
    */
-  slideToCurrent() {
-    this.sliderFrame.style[this.transformProperty] = `translate3d(-${this.currentSlide * (this.selectorWidth / this.perPage)}px, 0, 0)`;
+  slideToCurrent(enableTransition) {
+    const currentSlide = this.config.loop ? this.currentSlide + this.perPage : this.currentSlide;
+    const offset = (this.config.rtl ? 1 : -1) * currentSlide * (this.selectorWidth / this.perPage);
+
+    if (enableTransition) {
+      // This one is tricky, I know but this is a perfect explanation:
+      // https://youtu.be/cCOL7MC4Pl0
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.enableTransition();
+          this.sliderFrame.style[this.transformProperty] = `translate3d(${offset}px, 0, 0)`;
+        });
+      });
+    }
+    else {
+      this.sliderFrame.style[this.transformProperty] = `translate3d(${offset}px, 0, 0)`;
+    }
   }
 
 
@@ -279,9 +386,12 @@ export default class Siema {
    * Recalculate drag /swipe event and reposition the frame of a slider
    */
   updateAfterDrag() {
-    const movement = this.drag.endX - this.drag.startX;
+    const movement = (this.config.rtl ? -1 : 1) * (this.drag.endX - this.drag.startX);
     const movementDistance = Math.abs(movement);
     const howManySliderToSlide = this.config.multipleDrag ? Math.ceil(movementDistance / (this.selectorWidth / this.perPage)) : 1;
+
+    const slideToNegativeClone = movement > 0 && this.currentSlide - howManySliderToSlide < 0;
+    const slideToPositiveClone = movement < 0 && this.currentSlide + howManySliderToSlide > this.innerElements.length - this.perPage;
 
     if (movement > 0 && movementDistance > this.config.threshold && this.innerElements.length > this.perPage) {
       this.prev(howManySliderToSlide);
@@ -289,7 +399,7 @@ export default class Siema {
     else if (movement < 0 && movementDistance > this.config.threshold && this.innerElements.length > this.perPage) {
       this.next(howManySliderToSlide);
     }
-    this.slideToCurrent();
+    this.slideToCurrent(slideToNegativeClone || slideToPositiveClone);
   }
 
 
@@ -300,17 +410,15 @@ export default class Siema {
     // update perPage number dependable of user value
     this.resolveSlidesNumber();
 
-    // update sliderFrame width
-    this.selectorWidth = this.selector.offsetWidth;
-    this.sliderFrame.style.width = `${(this.selectorWidth / this.perPage) * this.innerElements.length}px`;
-
     // relcalculate currentSlide
     // prevent hiding items when browser width increases
     if (this.currentSlide + this.perPage > this.innerElements.length) {
-      this.currentSlide = this.innerElements.length - this.perPage;
+      this.currentSlide = this.innerElements.length <= this.perPage ? 0 : this.innerElements.length - this.perPage;
     }
 
-    this.slideToCurrent();
+    this.selectorWidth = this.selector.offsetWidth;
+
+    this.buildSliderFrame();
   }
 
 
@@ -351,8 +459,7 @@ export default class Siema {
   touchendHandler(e) {
     e.stopPropagation();
     this.pointerDown = false;
-    this.sliderFrame.style.webkitTransition = `all ${this.config.duration}ms ${this.config.easing}`;
-    this.sliderFrame.style.transition = `all ${this.config.duration}ms ${this.config.easing}`;
+    this.enableTransition();
     if (this.drag.endX) {
       this.updateAfterDrag();
     }
@@ -375,7 +482,12 @@ export default class Siema {
       this.drag.endX = e.touches[0].pageX;
       this.sliderFrame.style.webkitTransition = `all 0ms ${this.config.easing}`;
       this.sliderFrame.style.transition = `all 0ms ${this.config.easing}`;
-      this.sliderFrame.style[this.transformProperty] = `translate3d(${(this.currentSlide * (this.selectorWidth / this.perPage) + (this.drag.startX - this.drag.endX)) * -1}px, 0, 0)`;
+
+      const currentSlide = this.config.loop ? this.currentSlide + this.perPage : this.currentSlide;
+      const currentOffset = currentSlide * (this.selectorWidth / this.perPage);
+      const dragOffset = (this.drag.endX - this.drag.startX);
+      const offset = this.config.rtl ? currentOffset + dragOffset : currentOffset - dragOffset;
+      this.sliderFrame.style[this.transformProperty] = `translate3d(${(this.config.rtl ? 1 : -1) * offset}px, 0, 0)`;
     }
   }
 
@@ -404,8 +516,7 @@ export default class Siema {
     e.stopPropagation();
     this.pointerDown = false;
     this.selector.style.cursor = '-webkit-grab';
-    this.sliderFrame.style.webkitTransition = `all ${this.config.duration}ms ${this.config.easing}`;
-    this.sliderFrame.style.transition = `all ${this.config.duration}ms ${this.config.easing}`;
+    this.enableTransition();
     if (this.drag.endX) {
       this.updateAfterDrag();
     }
@@ -430,7 +541,12 @@ export default class Siema {
       this.selector.style.cursor = '-webkit-grabbing';
       this.sliderFrame.style.webkitTransition = `all 0ms ${this.config.easing}`;
       this.sliderFrame.style.transition = `all 0ms ${this.config.easing}`;
-      this.sliderFrame.style[this.transformProperty] = `translate3d(${(this.currentSlide * (this.selectorWidth / this.perPage) + (this.drag.startX - this.drag.endX)) * -1}px, 0, 0)`;
+
+      const currentSlide = this.config.loop ? this.currentSlide + this.perPage : this.currentSlide;
+      const currentOffset = currentSlide * (this.selectorWidth / this.perPage);
+      const dragOffset = (this.drag.endX - this.drag.startX);
+      const offset = this.config.rtl ? currentOffset + dragOffset : currentOffset - dragOffset;
+      this.sliderFrame.style[this.transformProperty] = `translate3d(${(this.config.rtl ? 1 : -1) * offset}px, 0, 0)`;
     }
   }
 
@@ -444,8 +560,7 @@ export default class Siema {
       this.selector.style.cursor = '-webkit-grab';
       this.drag.endX = e.pageX;
       this.drag.preventClick = false;
-      this.sliderFrame.style.webkitTransition = `all ${this.config.duration}ms ${this.config.easing}`;
-      this.sliderFrame.style.transition = `all ${this.config.duration}ms ${this.config.easing}`;
+      this.enableTransition();
       this.updateAfterDrag();
       this.clearDrag();
     }
@@ -466,45 +581,6 @@ export default class Siema {
 
 
   /**
-   * Update after removing, prepending or appending items.
-   */
-  updateFrame() {
-    // Create frame and apply styling
-    this.sliderFrame = document.createElement('div');
-    this.sliderFrame.style.width = `${(this.selectorWidth / this.perPage) * this.innerElements.length}px`;
-    this.sliderFrame.style.webkitTransition = `all ${this.config.duration}ms ${this.config.easing}`;
-    this.sliderFrame.style.transition = `all ${this.config.duration}ms ${this.config.easing}`;
-
-    if (this.config.draggable) {
-      this.selector.style.cursor = '-webkit-grab';
-    }
-
-    // Create a document fragment to put slides into it
-    const docFragment = document.createDocumentFragment();
-
-    // Loop through the slides, add styling and add them to document fragment
-    for (let i = 0; i < this.innerElements.length; i++) {
-      const elementContainer = document.createElement('div');
-      elementContainer.style.cssFloat = 'left';
-      elementContainer.style.float = 'left';
-      elementContainer.style.width = `${100 / this.innerElements.length}%`;
-      elementContainer.appendChild(this.innerElements[i]);
-      docFragment.appendChild(elementContainer);
-    }
-
-    // Add fragment to the frame
-    this.sliderFrame.appendChild(docFragment);
-
-    // Clear selector (just in case something is there) and insert a frame
-    this.selector.innerHTML = '';
-    this.selector.appendChild(this.sliderFrame);
-
-    // Go to currently active slide after initial build
-    this.slideToCurrent();
-  }
-
-
-  /**
    * Remove item from carousel.
    * @param {number} index - Item index to remove.
    * @param {function} callback - Optional callback to call after remove.
@@ -514,16 +590,21 @@ export default class Siema {
       throw new Error('Item to remove doesn\'t exist 😭');
     }
 
-    // when iteam wit lower index than current is removed
-    // shift slider back one position
-    // better UX and avoids situation with slider with no visible items
-    if (index < this.currentSlide) {
+    // Shift sliderFrame back by one item when:
+    // 1. Item with lower index than currenSlide is removed.
+    // 2. Last item is removed.
+    const lowerIndex = index < this.currentSlide;
+    const lastItem = this.currentSlide + this.perPage - 1 === index;
+
+    if (lowerIndex || lastItem) {
       this.currentSlide--;
     }
 
     this.innerElements.splice(index, 1);
 
-    this.updateFrame();
+    // build a frame and slide to a currentSlide
+    this.buildSliderFrame();
+
     if (callback) {
       callback.call(this);
     }
@@ -550,7 +631,9 @@ export default class Siema {
 
     this.innerElements.splice(index, 0, item);
 
-    this.updateFrame();
+    // build a frame and slide to a currentSlide
+    this.buildSliderFrame();
+
     if (callback) {
       callback.call(this);
     }
@@ -590,6 +673,8 @@ export default class Siema {
    */
   destroy(restoreMarkup = false, callback) {
     this.detachEvents();
+
+    this.selector.style.cursor = 'auto';
 
     if (restoreMarkup) {
       const slides = document.createDocumentFragment();
