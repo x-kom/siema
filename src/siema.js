@@ -550,12 +550,12 @@ export default class Siema {
   /**
    * Insert item to carousel at particular index.
    * @param {HTMLElement} item - Item to insert.
-   * @param {number} index - Index of new new item insertion.
+   * @param {number} index - Index of new item insertion.
    * @param {function} callback - Optional callback to call after insert.
    */
   insert(item, index, callback) {
     if (index < 0 || index > this.innerElements.length + 1) {
-      throw new Error('Unable to inset it at this index 😭');
+      throw new Error('Unable to insert it at this index 😭');
     }
     if (this.innerElements.indexOf(item) !== -1) {
       throw new Error('The same item in a carousel? Really? Nope 😭');
@@ -573,6 +573,27 @@ export default class Siema {
     }
   }
 
+  /**
+   * Insert item to carousel at particular index.
+   * @param {HTMLElement} item - Replacement item.
+   * @param {number} index - Index of item to be replaced.
+   * @param {function} callback - Optional callback to call after replacement.
+   */
+  replace(item, index, callback) {
+    if (index < 0 || index > this.innerElements.length + 1) {
+      throw new Error('Unable to replace it at this index 😭');
+    }
+    if (this.innerElements.indexOf(item) !== -1) {
+      throw new Error('The same item in a carousel? Really? Nope 😭');
+    }
+
+    this.innerElements.splice(index, 1, item);
+
+    this.updateFrame();
+    if (callback) {
+      callback.call(this);
+    }
+  }
 
   /**
    * Prepernd item to carousel.
