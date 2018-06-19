@@ -567,7 +567,7 @@ export default class Siema {
   }
 
   /**
-   * Insert item to carousel at particular index.
+   * Replace carousel item at particular index with new item.
    * @param {HTMLElement} item - Replacement item.
    * @param {number} index - Index of item to be replaced.
    * @param {function} callback - Optional callback to call after replacement.
@@ -589,7 +589,7 @@ export default class Siema {
   }
 
   /**
-   * Prepernd item to carousel.
+   * Prepend item to carousel.
    * @param {HTMLElement} item - Item to prepend.
    * @param {function} callback - Optional callback to call after prepend.
    */
