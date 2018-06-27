@@ -31,6 +31,7 @@ export interface SiemaOptions {
   duration?: number;
   easing?: string;
   perPage?: number | PageInterface;
+  slideWidth?: number;
   mode?: SliderMode;
   startIndex?: number;
   draggable?: boolean;

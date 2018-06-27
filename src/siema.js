@@ -50,7 +50,9 @@ export default class Siema {
       easing: 'ease-out',
       perPage: 1,
       slideWidth: 0,
-      mode: 'left', // left, right, centerFit, center
+      // possible modes: left, right, center, centerFit
+      mode: 'left',
+      // freeScroll: false,
       startIndex: 0,
       draggable: true,
       preventClickOnDrag: false,
@@ -206,7 +208,6 @@ export default class Siema {
         }
       }
     }
-    // console.log('perPage', this.perPage);
   }
 
   getLastPossibleSlideIndex() {
@@ -326,7 +327,6 @@ export default class Siema {
    * Moves sliders frame to position of currently active slide
    */
   slideToCurrent() {
-    console.log(this.currentSlide, this.sliderOffset);
     this.sliderFrame.style[this.transformProperty] = `translate3d(${-this.getCurrentOffset()}px, 0, 0)`;
   }
 
@@ -335,6 +335,8 @@ export default class Siema {
    * Recalculate drag /swipe event and reposition the frame of a slider
    */
   updateAfterDrag() {
+    // if (this.config.freeScroll) { return; }
+
     const movement = this.drag.endX - this.drag.startX;
     const movementDistance = Math.abs(movement);
     const howManySliderToSlide = this.config.multipleDrag ? Math.ceil(movementDistance / (this.selectorWidth / this.perPage)) : 1;
@@ -361,9 +363,9 @@ export default class Siema {
     this.selectorWidth = this.selector.offsetWidth;
     this.sliderFrame.style.width = `${(this.selectorWidth / this.perPage) * this.innerElements.length}px`;
 
-    // relcalculate currentSlide
+    // recalculate currentSlide
     // prevent hiding items when browser width increases
-    if (this.currentSlide + this.perPage > this.innerElements.length) {
+    if (this.config.perPage && this.currentSlide + this.perPage > this.innerElements.length) {
       this.currentSlide = this.innerElements.length <= this.perPage ? 0 : this.getLastPossibleSlideIndex();
     }
 
