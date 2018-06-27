@@ -24,11 +24,14 @@ export interface PageInterface {
   [key: number]: number;
 }
 
+export type SliderMode = 'left' | 'right' | 'center' | 'centerFit';
+
 export interface SiemaOptions {
   selector?: string | Node;
   duration?: number;
   easing?: string;
   perPage?: number | PageInterface;
+  mode?: SliderMode;
   startIndex?: number;
   draggable?: boolean;
   multipleDrag?: boolean;
