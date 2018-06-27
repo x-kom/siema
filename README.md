@@ -73,7 +73,7 @@ The number of slides to be shown. It accepts a number [(example)](http://codepen
 
 There is also a possibility to pass `0` which enables automatic slides positioning according to `mode` option.
 
-**`mode`** (string)
+**`mode`** (string)  
 When automatic slides positioning is enabled, it will change the behaviour of slider when changing the active slide.
 
 Possible values:
@@ -85,7 +85,7 @@ Possible values:
 | `center` | Always aligns to the center of a slider container |
 | `centerFit` | It will be positioned as close to the center as possible while not leaving a free space at any end. In other words, active slide aligns to the center of slider container unless there will be a free space at any end of slider container, in which case the slider will not move any further |
 
-**`slideWidth`** (number)
+**`slideWidth`** (number)  
 Width of single slide in pixels used when `perPage` option is set to `0`. If not specified, Siema will try to calculate width based on the first slide.
 
 **`startIndex`** (number)  
