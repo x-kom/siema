@@ -77,6 +77,7 @@ There is also a possibility to pass `0` which enables automatic slides positioni
 When automatic slides positioning is enabled, it will change the behaviour of slider when changing the active slide.
 
 Possible values:
+
 | Value | Active slide position |
 | --- | --- |
 | `left` | Always sticks to the left side of a slider container |
