@@ -52,7 +52,7 @@ export default class Siema {
       slideWidth: 0,
       // possible modes: left, right, center, centerFit
       mode: 'left',
-      // freeScroll: false,
+      freeDrag: true,
       startIndex: 0,
       draggable: true,
       preventClickOnDrag: false,
@@ -187,6 +187,9 @@ export default class Siema {
     this.config.onInit.call(this);
   }
 
+  getSlideWidth() {
+    return this.config.slideWidth || this.innerElements[0].children[0].offsetWidth;
+  }
 
   /**
    * Determinates slides number accordingly to clients viewport.
@@ -194,7 +197,7 @@ export default class Siema {
   resolveSlidesNumber() {
     if (typeof this.config.perPage === 'number') {
       if (!this.config.perPage) {
-        this.perPage = this.selector.offsetWidth / (this.config.slideWidth || this.innerElements[0].children[0].offsetWidth);
+        this.perPage = this.selector.offsetWidth / this.getSlideWidth();
       }
       else {
         this.perPage = this.config.perPage;
@@ -330,14 +333,28 @@ export default class Siema {
     this.sliderFrame.style[this.transformProperty] = `translate3d(${-this.getCurrentOffset()}px, 0, 0)`;
   }
 
+  updateSliderOffsetAfterDrag(movement) {
+    this.sliderOffset += movement / this.getSlideWidth();
+    if (this.currentSlide - this.sliderOffset < 0) {
+      this.sliderOffset = this.currentSlide;
+    }
+    else if (this.currentSlide - this.sliderOffset > this.innerElements.length - this.perPage) {
+      this.sliderOffset = this.currentSlide - (this.innerElements.length - this.perPage);
+    }
+  }
 
   /**
    * Recalculate drag /swipe event and reposition the frame of a slider
    */
   updateAfterDrag() {
-    // if (this.config.freeScroll) { return; }
-
     const movement = this.drag.endX - this.drag.startX;
+
+    if (this.config.freeDrag) {
+      this.updateSliderOffsetAfterDrag(movement);
+      this.slideToCurrent();
+      return;
+    }
+
     const movementDistance = Math.abs(movement);
     const howManySliderToSlide = this.config.multipleDrag ? Math.ceil(movementDistance / (this.selectorWidth / this.perPage)) : 1;
 
