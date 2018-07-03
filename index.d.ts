@@ -33,6 +33,7 @@ export interface SiemaOptions {
   perPage?: number | PageInterface;
   slideWidth?: number;
   mode?: SliderMode;
+  freeDrag?: boolean;
   startIndex?: number;
   draggable?: boolean;
   multipleDrag?: boolean;

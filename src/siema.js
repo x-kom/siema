@@ -52,7 +52,7 @@ export default class Siema {
       slideWidth: 0,
       // possible modes: left, right, center, centerFit
       mode: 'left',
-      freeDrag: true,
+      freeDrag: false,
       startIndex: 0,
       draggable: true,
       preventClickOnDrag: false,

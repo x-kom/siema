@@ -48,6 +48,7 @@ new Siema({
   easing: 'ease-out',
   perPage: 1,
   mode: 'left',
+  freeDrag: false,
   startIndex: 0,
   draggable: true,
   multipleDrag: true,
