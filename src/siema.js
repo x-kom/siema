@@ -55,7 +55,7 @@ export default class Siema {
       freeDrag: false,
       startIndex: 0,
       draggable: true,
-      preventClickOnDrag: false,
+      preventClickOnDrag: true,
       multipleDrag: true,
       threshold: 20,
       loop: false,
@@ -467,7 +467,7 @@ export default class Siema {
       return;
     }
 
-    e.preventDefault();
+    // e.preventDefault(); // commented out since its purpose is unknown and everything seems to work without it
     e.stopPropagation();
     this.pointerDown = true;
     this.drag.startX = e.pageX;
