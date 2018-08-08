@@ -192,7 +192,7 @@ export default class Siema {
   }
 
   /**
-   * Determinates slides number accordingly to clients viewport.
+   * Determines slides number accordingly to client's viewport.
    */
   resolveSlidesNumber() {
     if (typeof this.config.perPage === 'number') {
@@ -226,7 +226,10 @@ export default class Siema {
     }
     else if (this.config.mode === 'centerFit') {
       const centerModeOffset = (this.perPage - 1) / 2;
-      if (this.currentSlide - centerModeOffset < 0) {
+      if (this.innerElements.length <= this.perPage) {
+        this.sliderOffset = (this.perPage - this.innerElements.length) / 2 + this.currentSlide;
+      }
+      else if (this.currentSlide - centerModeOffset < 0) {
         this.sliderOffset = this.currentSlide;
       }
       else if (this.innerElements.length - this.currentSlide - 1 - centerModeOffset < 0) {
@@ -253,7 +256,7 @@ export default class Siema {
    * @param {function} callback - Optional callback function.
    */
   prev(howManySlides = 1, callback) {
-    if (this.innerElements.length <= this.perPage) {
+    if (this.config.perPage > 0 && this.innerElements.length <= this.perPage) {
       return;
     }
     const beforeChange = this.currentSlide;
@@ -280,7 +283,7 @@ export default class Siema {
    * @param {function} callback - Optional callback function.
    */
   next(howManySlides = 1, callback) {
-    if (this.innerElements.length <= this.perPage) {
+    if (this.config.perPage > 0 && this.innerElements.length <= this.perPage) {
       return;
     }
     const beforeChange = this.currentSlide;
@@ -307,7 +310,7 @@ export default class Siema {
    * @param {function} callback - Optional callback function.
    */
   goTo(index, callback) {
-    if (this.innerElements.length <= this.perPage) {
+    if (this.config.perPage > 0 && this.innerElements.length <= this.perPage) {
       return;
     }
     const beforeChange = this.currentSlide;
@@ -334,12 +337,31 @@ export default class Siema {
   }
 
   updateSliderOffsetAfterDrag(movement) {
+    // moving
     this.sliderOffset += movement / this.getSlideWidth();
-    if (this.currentSlide - this.sliderOffset < 0) {
-      this.sliderOffset = this.currentSlide;
+    // calculating limits
+    let leftLimit = 0;
+    let rightLimit = this.perPage - 1;
+    if (this.config.mode === 'center') {
+      rightLimit = leftLimit = (this.perPage - 1) / 2;
     }
-    else if (this.currentSlide - this.sliderOffset > this.innerElements.length - this.perPage) {
-      this.sliderOffset = this.currentSlide - (this.innerElements.length - this.perPage);
+    else if (this.config.mode === 'centerFit') {
+      rightLimit = leftLimit = Math.max(0, (this.perPage - this.innerElements.length) / 2);
+    }
+    else if (this.config.mode === 'left') {
+      leftLimit = 0;
+      rightLimit = this.perPage - 1;
+    }
+    else if (this.config.mode === 'right') {
+      leftLimit = this.perPage - 1;
+      rightLimit = 0;
+    }
+    // adjusting if out of bounds
+    if (this.sliderOffset - this.currentSlide > leftLimit) {
+      this.sliderOffset = leftLimit + this.currentSlide;
+    }
+    else if (this.perPage - this.innerElements.length - (this.sliderOffset - this.currentSlide) > rightLimit) {
+      this.sliderOffset = -rightLimit + this.perPage - this.innerElements.length + this.currentSlide;
     }
   }
 
