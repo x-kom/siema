@@ -467,7 +467,11 @@ export default class Siema {
       return;
     }
 
-    // e.preventDefault(); // commented out since its purpose is unknown and everything seems to work without it
+    if (typeof e.target.tabIndex !== 'number' || e.target.tabIndex < 0) {
+      // main purpose is to prevent drag event on elements inside siema which completely breaks the slides dragging behaviour in firefox
+      // exception is when element has a tabIndex set, in which case event shouldn't be cancelled because target element won't receive focus event
+      e.preventDefault();
+    }
     e.stopPropagation();
     this.pointerDown = true;
     this.drag.startX = e.pageX;
@@ -494,8 +498,8 @@ export default class Siema {
    * mousemove event handler
    */
   mousemoveHandler(e) {
-    e.preventDefault();
     if (this.pointerDown) {
+      e.preventDefault();
       this.drag.endX = e.pageX;
 
       const dragDistance = Math.abs(this.drag.startX - this.drag.endX);
