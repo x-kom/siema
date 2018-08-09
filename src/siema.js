@@ -192,6 +192,14 @@ export default class Siema {
     return this.config.slideWidth || this.innerElements[0].children[0].offsetWidth;
   }
 
+  getLeftOffset() {
+    return -this.getCurrentOffset();
+  }
+
+  getRightOffset() {
+    return this.selectorWidth - this.getSlideWidth() * this.innerElements.length - this.getLeftOffset();
+  }
+
   /**
    * Determines slides number accordingly to client's viewport.
    */
@@ -270,7 +278,11 @@ export default class Siema {
     if (beforeChange !== this.currentSlide) {
       this.resolveSliderOffset();
       this.slideToCurrent();
-      this.config.onChange.call(this);
+      this.config.onChange.call(this, {
+        currentSlide: this.currentSlide,
+        leftOffset: this.getLeftOffset(),
+        rightOffset: this.getRightOffset(),
+      });
       if (callback) {
         callback.call(this);
       }
@@ -297,7 +309,11 @@ export default class Siema {
     if (beforeChange !== this.currentSlide) {
       this.resolveSliderOffset();
       this.slideToCurrent();
-      this.config.onChange.call(this);
+      this.config.onChange.call(this, {
+        currentSlide: this.currentSlide,
+        leftOffset: this.getLeftOffset(),
+        rightOffset: this.getRightOffset(),
+      });
       if (callback) {
         callback.call(this);
       }
@@ -319,7 +335,11 @@ export default class Siema {
     if (beforeChange !== this.currentSlide) {
       this.resolveSliderOffset();
       this.slideToCurrent();
-      this.config.onChange.call(this);
+      this.config.onChange.call(this, {
+        currentSlide: this.currentSlide,
+        leftOffset: this.getLeftOffset(),
+        rightOffset: this.getRightOffset(),
+      });
       if (callback) {
         callback.call(this);
       }
@@ -481,7 +501,7 @@ export default class Siema {
       const leftOffset = (this.getCurrentOffset() + (this.drag.startX - this.drag.endX)) * -1;
       const rightOffset = this.selectorWidth - this.getSlideWidth() * this.innerElements.length - leftOffset;
       this.slideWithoutTransition(leftOffset);
-      this.config.onDrag({
+      this.config.onDrag.call(this, {
         leftOffset,
         rightOffset
       });
@@ -543,7 +563,7 @@ export default class Siema {
       const leftOffset = (this.getCurrentOffset() + (this.drag.startX - this.drag.endX)) * -1;
       const rightOffset = this.selectorWidth - this.getSlideWidth() * this.innerElements.length - leftOffset;
       this.slideWithoutTransition(leftOffset);
-      this.config.onDrag({
+      this.config.onDrag.call(this, {
         leftOffset,
         rightOffset
       });

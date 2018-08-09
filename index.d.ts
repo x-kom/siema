@@ -42,6 +42,6 @@ export interface SiemaOptions {
   loop?: boolean;
   overflowHidden?: boolean;
   onInit?(): void;
-  onChange?(): void;
+  onChange?(params: { currentSlide: number; leftOffset: number; rightOffset: number }): void;
   onDrag?(params: { leftOffset: number; rightOffset: number }): void;
 }

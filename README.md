@@ -115,13 +115,16 @@ Automatically add `overflow: hidden;` style to main carousel DOM element.
 **`onInit`** (function)  
 Runs immediately after initialization [(example)](http://codepen.io/pawelgrzybek/pen/BRBjpE).
 
-**`onChange`** (function)  
-Runs after slide change [(example)](http://codepen.io/pawelgrzybek/pen/RVbrVe).
+**`onChange(params)`** (function)  
+Runs after slide change [(example)](http://codepen.io/pawelgrzybek/pen/RVbrVe). `params` is an object containing `currentSlide`, `leftOffset` and `rightOffset` properties. Those properties denote:
+* `currentSlide` - current slide number
+* `leftOffset` - all slides lane offset from left edge of visible slider (negative number means slides stick out of slider from left side; `0` means they stick to the left side; positive number means there is a gap between leftmost slide and left slider edge)
+* `rightOffset` - all slides lane offset from right edge of visible slider (negative number means slides stick out of slider from right side; `0` means they stick to the right side; positive number means there is a gap between rightmost slide and right slider edge)
 
 **`onDrag(params)`** (function)  
 Runs when slider is being dragged. `params` is an object containing `leftOffset` and `rightOffset` properties. Those properties denote:
-* `leftOffset` - all slides lane offset from left edge of visible slider (negative number means slides stick out of slider from left side; `0` means they stick to the left side; positive number means there is a gap between leftmost slide and left slider edge)
-* `rightOffset` - all slides lane offset from right edge of visible slider (negative number means slides stick out of slider from right side; `0` means they stick to the right side; positive number means there is a gap between rightmost slide and right slider edge)
+* `leftOffset` - see `onChange` description
+* `rightOffset` - see `onChange` description
 
 ## API
 
