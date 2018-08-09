@@ -41,7 +41,7 @@ module.exports = {
         ] : [
           new WebpackShellPlugin({
             // onBuildStart: ['echo "Build start"'],
-            onBuildEnd: process.env.DEV_SIEMA_DEST ? [`cp ./dist/siema.min.js ${process.env.DEV_SIEMA_DEST}`, 'echo "Copied"'] : [],
+            onBuildEnd: process.env.DEV_SIEMA_DEST ? [`cp ./dist/siema.min.js ${path.join(process.env.DEV_SIEMA_DEST, 'dist')}`, `cp ./index.d.ts ${process.env.DEV_SIEMA_DEST}`, 'echo "Copied"'] : [],
             dev: false,
           })
         ]

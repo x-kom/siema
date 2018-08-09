@@ -43,4 +43,5 @@ export interface SiemaOptions {
   overflowHidden?: boolean;
   onInit?(): void;
   onChange?(): void;
+  onDrag?(params: { leftOffset: number; rightOffset: number }): void;
 }

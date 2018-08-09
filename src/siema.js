@@ -50,7 +50,7 @@ export default class Siema {
       easing: 'ease-out',
       perPage: 1,
       slideWidth: 0,
-      // possible modes: left, right, center, centerFit
+      // possible modes: left, right, center, centerFit | TODO: leftFit, rightFit
       mode: 'left',
       freeDrag: false,
       startIndex: 0,
@@ -62,6 +62,7 @@ export default class Siema {
       overflowHidden: true,
       onInit: () => { },
       onChange: () => { },
+      onDrag: () => { },
     };
 
     const userSttings = options;
@@ -333,7 +334,13 @@ export default class Siema {
    * Moves sliders frame to position of currently active slide
    */
   slideToCurrent() {
-    this.sliderFrame.style[this.transformProperty] = `translate3d(${-this.getCurrentOffset()}px, 0, 0)`;
+    this.sliderFrame.style[this.transformProperty] = `translate3d(${Math.round(-this.getCurrentOffset())}px, 0, 0)`;
+  }
+
+  slideWithoutTransition(position) {
+    this.sliderFrame.style.webkitTransition = `all 0ms ${this.config.easing}`;
+    this.sliderFrame.style.transition = `all 0ms ${this.config.easing}`;
+    this.sliderFrame.style[this.transformProperty] = `translate3d(${Math.round(position)}px, 0, 0)`;
   }
 
   updateSliderOffsetAfterDrag(movement) {
@@ -401,7 +408,6 @@ export default class Siema {
     // update sliderFrame width
     this.selectorWidth = this.selector.offsetWidth;
     this.sliderFrame.style.width = `${(this.selectorWidth / this.perPage) * this.innerElements.length}px`;
-
     // recalculate currentSlide
     // prevent hiding items when browser width increases
     if (this.config.perPage && this.currentSlide + this.perPage > this.innerElements.length) {
@@ -472,9 +478,13 @@ export default class Siema {
     if (this.pointerDown && this.drag.letItGo) {
       e.preventDefault();
       this.drag.endX = e.touches[0].pageX;
-      this.sliderFrame.style.webkitTransition = `all 0ms ${this.config.easing}`;
-      this.sliderFrame.style.transition = `all 0ms ${this.config.easing}`;
-      this.sliderFrame.style[this.transformProperty] = `translate3d(${(this.getCurrentOffset() + (this.drag.startX - this.drag.endX)) * -1}px, 0, 0)`;
+      const leftOffset = (this.getCurrentOffset() + (this.drag.startX - this.drag.endX)) * -1;
+      const rightOffset = this.selectorWidth - this.getSlideWidth() * this.innerElements.length - leftOffset;
+      this.slideWithoutTransition(leftOffset);
+      this.config.onDrag({
+        leftOffset,
+        rightOffset
+      });
     }
   }
 
@@ -530,9 +540,13 @@ export default class Siema {
       }
 
       this.selector.style.cursor = '-webkit-grabbing';
-      this.sliderFrame.style.webkitTransition = `all 0ms ${this.config.easing}`;
-      this.sliderFrame.style.transition = `all 0ms ${this.config.easing}`;
-      this.sliderFrame.style[this.transformProperty] = `translate3d(${(this.getCurrentOffset() + (this.drag.startX - this.drag.endX)) * -1}px, 0, 0)`;
+      const leftOffset = (this.getCurrentOffset() + (this.drag.startX - this.drag.endX)) * -1;
+      const rightOffset = this.selectorWidth - this.getSlideWidth() * this.innerElements.length - leftOffset;
+      this.slideWithoutTransition(leftOffset);
+      this.config.onDrag({
+        leftOffset,
+        rightOffset
+      });
     }
   }
 
