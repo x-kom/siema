@@ -658,7 +658,7 @@ export default class Siema {
     const lowerIndex = index < this.currentSlide;
     const lastItem = this.currentSlide + this.perPage - 1 === index;
 
-    if (lowerIndex || lastItem) {
+    if ((lowerIndex || lastItem) && this.currentSlide > 0) {
       this.currentSlide--;
     }
 
